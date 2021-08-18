@@ -2,7 +2,7 @@
 
 ## Description
 
-TODO: Describe your charm in a few paragraphs of Markdown
+A little charmed operator for Caner to play, hack and break.
 
 ## Usage
 
