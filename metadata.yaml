@@ -2,16 +2,15 @@
 # See LICENSE file for licensing details.
 name: canercharm
 description: |
-  TEMPLATE-TODO: fill out the charm's description
+  a little charm for caner to break things and understand different components such as workloads, actions, config, storage etc.
 summary: |
-  TEMPLATE-TODO: fill out the charm's summary
+  Sort of a sparring charm that may or may not work at different times.
 
-# TEMPLATE-TODO: replace with containers for your workload (delete for non-k8s)
 containers:
   httpbin:
     resource: httpbin-image
 
-# TEMPLATE-TODO: each container defined above must specify an oci-image resource
+# each container defined above must specify an oci-image resource
 resources:
   httpbin-image:
     type: oci-image
