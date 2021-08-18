@@ -66,12 +66,6 @@ Remove	"juju remove-application canercharm"	stop -> remove
     """
     def _on_httpbin_pebble_ready(self, event):
         """Define and start a workload using the Pebble API.
-
-        TEMPLATE-TODO: change this example to suit your needs.
-        You'll need to specify the right entrypoint and environment
-        configuration for your specific workload. Tip: you can see the
-        standard entrypoint of an existing container using docker inspect
-
         Learn more about Pebble layers at https://github.com/canonical/pebble
         """
         # Get a reference the container attribute on the PebbleReadyEvent
@@ -92,11 +86,28 @@ Remove	"juju remove-application canercharm"	stop -> remove
         }
         # Add intial Pebble config layer using the Pebble API
         container.add_layer("httpbin", pebble_layer, combine=True)
+        # combine=True =======> If there's already a layer with the
+        # same name (e.g. "httpbin") running on this Pebble instance,
+        # then override it
+
         # Autostart any services that were defined with startup: enabled
         container.autostart()
         # Learn more about statuses in the SDK docs:
         # https://juju.is/docs/sdk/constructs#heading--statuses
         self.unit.status = ActiveStatus()
+        """Report its own status to the Juju controller. There are 6 valid
+        types, only 4 of them are accessible from charm code.
+
+        from ops.model import <the 4 below>
+
+        ActiveStatus("Everything is good")
+        WaitingStatus
+        MaintenanceStatus("Installing application packages, doing something, and gonna go back to ActiveStatus without any intervention") <------- setting a msg is possible
+        BlockedStatus("I need a human to recover me from something")
+        * UnknownStatus
+        * ErrorStatus
+
+        """
 
     def _on_config_changed(self, _):
         """Just an example to show how to deal with changed configuration.
