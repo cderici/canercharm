@@ -37,5 +37,16 @@ operator behaviour without full deployment. Just `run_tests`:
 
    $ watch -n1 --color juju status --color
 
+### set the log level to DEBUG for the development model
+
+   $ juju model-config logging-config="<root>=WARNING;unit=DEBUG"
 
 Have the `juju debug-log` and `watch` running all the time to keep track of things
+
+## kubectl
+
+   $ kubectl -n development get pods
+
+   $ kubectl -n development describe pod canercharm-0
+
+(canercharm-0 <- 0 index is because we have only 1 unit of the application)
