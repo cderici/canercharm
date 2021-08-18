@@ -25,15 +25,45 @@ logger = logging.getLogger(__name__)
 class CanercharmCharm(CharmBase):
     """Charm the service."""
 
-    _stored = StoredState()
+    _stored = StoredState() # <- to persist data across multiple instantiations of the class
+    # (which happens every time the controller emits an event)
 
     def __init__(self, *args):
         super().__init__(*args)
+
+        """ some common events
+        install
+        config-changed
+        start
+        upgrade-charm
+        update-status
+        <container>-pebble-ready
+        stop
+        remove
+        collect-metrics
+        """
+
+        # install our callbacks for specific events
         self.framework.observe(self.on.httpbin_pebble_ready, self._on_httpbin_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.fortune_action, self._on_fortune_action)
-        self._stored.set_default(things=[])
 
+        self._stored.set_default(things=[]) # <-- setting the default in the controller DB
+
+    """
+    SOME Juju OPS TRIGGERING SOME EVENTS
+
+Deploy	"juju deploy ./canercharm.charm"	install -> config-changed -> start -> pebble-ready
+Scale	"juju add-unit -n 2 canercharm" 	install -> config-changed -> start -> pebble-ready
+Configure	"juju config canercharm thing=foo" 	config-changed
+Upgrade	"juju upgrade-charm canercharm"  	upgrade-charm -> config-changed -> pebble-ready
+Remove	"juju remove-application canercharm"	stop -> remove
+
+    """
+
+    """
+    _on_[WHATEVER CONTAINER YOU WRITE IN METADATA.YAML]_pebble_ready
+    """
     def _on_httpbin_pebble_ready(self, event):
         """Define and start a workload using the Pebble API.
 
