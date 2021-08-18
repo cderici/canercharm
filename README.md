@@ -23,3 +23,19 @@ The Python operator framework includes a very nice harness for testing
 operator behaviour without full deployment. Just `run_tests`:
 
     ./run_tests
+
+
+## Build
+
+   $ charmcraft pack
+
+## deploy
+
+   $ juju deploy ./canercharm.charm --resource httpbin-image=whatever/httpbin
+
+## watch
+
+   $ watch -n1 --color juju status --color
+
+
+Have the `juju debug-log` and `watch` running all the time to keep track of things
