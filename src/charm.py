@@ -50,7 +50,9 @@ class CanercharmCharm(CharmBase):
 
         # self._stored.set_default(things=[]) # <-- setting the default in the controller DB
 
-        self.framework.observe(self.on.gosherve_pebble_ready, self._on_gosherve_pebble_ready)
+        # self.framework.observe(self.on.gosherve_pebble_ready, self._on_gosherve_pebble_ready)
+
+        self.framework.observe(self.on.config_changed, self._on_config_changed)
 
     """
     SOME Juju OPS TRIGGERING SOME EVENTS
@@ -66,13 +68,44 @@ Remove	"juju remove-application canercharm"	stop -> remove
     """
     _on_[WHATEVER CONTAINER YOU WRITE IN METADATA.YAML]_pebble_ready
     """
-
+    # don't need this anymore, since it was adding a layer and autostarting the service
+    #                                    v---------speficit to a container
     def _on_gosherve_pebble_ready(self, event):
         # get a reference the container attribute on the PebbleReadyEvent
         container = event.workload
 
         # define an initial pebble layer config
-        pebble_layer = {
+        pebble_layer = None
+
+        # add initial pebble config layer using the pebble API
+        container.add_layer("gosherve", pebble_layer, combine=True)
+        container.autostart()
+        self.unit.status = ActiveStatus()
+
+
+    def _on_config_changed(self, event):
+        # get the container so we can configure/manipulate it
+        container = self.unit.get_container("gosherve")
+        # get a layer going
+        layer = self._gosherve_layer()
+        # get the current config
+        plan = container.get_plan()
+        services = plan.to_dict().get("services", {})
+        if services != layer["services"]:
+            # there are some changes
+            container.add_layer("gosherve", layer, combine=True)
+            logging.info("added updated layer 'gosherve' to Pebble plan------------------------------------")
+            # stop the service if it's already running
+            if container.get_service("gosherve").is_running():
+                container.stop("gosherve")
+            # restart it to get the config going, and report the new status to Juju
+            container.start("gosherve")
+            logging.info("restarted the gosherve service ---------------------------------------------")
+        # we're good, set an ActiveStatus
+        self.unit.status = ActiveStatus("we're good")
+
+    def _gosherve_layer(self):
+        return {
             "summary" : "gosherve layer",
             "description" : "pebble config layer for gosherve",
             "services" : {
@@ -82,16 +115,11 @@ Remove	"juju remove-application canercharm"	stop -> remove
                     "command" : "/gosherve",
                     "startup" : "enabled",
                     "environment" : {
-                        "REDIRECT_MAP_URL" : "https://jnsgr.uk/demo-routes"
+                        "REDIRECT_MAP_URL" : self.config["redirect-map"]
                     },
                 }
             }
         }
-
-        # add initial pebble config layer using the pebble API
-        container.add_layer("gosherve", pebble_layer, combine=True)
-        container.autostart()
-        self.unit.status = ActiveStatus()
 
     # def _on_httpbin_pebble_ready(self, event):
     #     """Define and start a workload using the Pebble API.
