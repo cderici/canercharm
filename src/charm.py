@@ -14,6 +14,8 @@ develop a new k8s charm using the Operator Framework:
 
 import logging
 import urllib
+
+from charms.nginx_ingress_integrator.v0.ingress import IngressRequires
 from ops.charm import CharmBase
 #from ops.framework import StoredState
 from ops.main import main
@@ -56,6 +58,10 @@ class CanercharmCharm(CharmBase):
 
         self.framework.observe(self.on.custom_job_action, self._perform_custom_task)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
+
+        self.ingress = IngressRequires(self, {"service-hostname": "canercharm.juju",
+                                              "service-name": self.app.name, # self.unit.name
+                                              "service-port":8080})
 
     """
     SOME Juju OPS TRIGGERING SOME EVENTS

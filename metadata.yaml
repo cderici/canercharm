@@ -23,3 +23,8 @@ storage:
   webroot:
     type: filesystem
     location: /srv
+
+
+requires:
+  ingress:
+    interface: ingress
