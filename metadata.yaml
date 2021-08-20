@@ -9,6 +9,9 @@ summary: |
 containers:
   gosherve:
     resource: gosherve-image
+    mounts:
+      - storage: webroot
+        location: /srv
 
 # each container defined above must specify an oci-image resource
 resources:
@@ -16,3 +19,7 @@ resources:
     type: oci-image
     description: OCI image for gosherve (kennethreitz/httpbin)
 
+storage:
+  webroot:
+    type: filesystem
+    location: /srv

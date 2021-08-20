@@ -13,11 +13,11 @@ develop a new k8s charm using the Operator Framework:
 """
 
 import logging
-
+import urllib
 from ops.charm import CharmBase
 #from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus
+from ops.model import ActiveStatus, MaintenanceStatus
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,8 @@ class CanercharmCharm(CharmBase):
 
         # self.framework.observe(self.on.gosherve_pebble_ready, self._on_gosherve_pebble_ready)
 
+        self.framework.observe(self.on.install, self._on_install) # <---- fires ONLY on $ juju deploy (and scale)
+
         self.framework.observe(self.on.config_changed, self._on_config_changed)
 
     """
@@ -82,6 +84,16 @@ Remove	"juju remove-application canercharm"	stop -> remove
         container.autostart()
         self.unit.status = ActiveStatus()
 
+
+    def _on_install(self, _):
+        self._fetch_site()
+
+    def _fetch_site(self):
+        site_src = "https://jnsgr.uk/demo-site"
+        self.unit.status = MaintenanceStatus("fetching the web site")
+        logger.info(f">>>>>>>>>>>>>>>>>>>>>>>>>> Downloading site from {site_src}")
+        urllib.request.urlretrieve(site_src, "/srv/index.html")
+        self.unit.status = ActiveStatus("Her şey normal")
 
     def _on_config_changed(self, event):
         # get the container so we can configure/manipulate it
@@ -115,7 +127,8 @@ Remove	"juju remove-application canercharm"	stop -> remove
                     "command" : "/gosherve",
                     "startup" : "enabled",
                     "environment" : {
-                        "REDIRECT_MAP_URL" : self.config["redirect-map"]
+                        "REDIRECT_MAP_URL" : self.config["redirect-map"],
+                        "WEBROOT": "/srv"
                     },
                 }
             }
