@@ -15,7 +15,7 @@ develop a new k8s charm using the Operator Framework:
 import logging
 
 from ops.charm import CharmBase
-from ops.framework import StoredState
+#from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class CanercharmCharm(CharmBase):
     """Charm the service."""
 
-    _stored = StoredState() # <- to persist data across multiple instantiations of the class
+    #_stored = StoredState() # <- to persist data across multiple instantiations of the class
     # (which happens every time the controller emits an event)
 
     def __init__(self, *args):
@@ -44,11 +44,13 @@ class CanercharmCharm(CharmBase):
         """
 
         # install our callbacks for specific events
-        self.framework.observe(self.on.httpbin_pebble_ready, self._on_httpbin_pebble_ready)
-        self.framework.observe(self.on.config_changed, self._on_config_changed)
-        self.framework.observe(self.on.fortune_action, self._on_fortune_action)
+        # self.framework.observe(self.on.httpbin_pebble_ready, self._on_httpbin_pebble_ready)
+        # self.framework.observe(self.on.config_changed, self._on_config_changed)
+        # self.framework.observe(self.on.fortune_action, self._on_fortune_action)
 
-        self._stored.set_default(things=[]) # <-- setting the default in the controller DB
+        # self._stored.set_default(things=[]) # <-- setting the default in the controller DB
+
+        self.framework.observe(self.on.gosherve_pebble_ready, self._on_gosherve_pebble_ready)
 
     """
     SOME Juju OPS TRIGGERING SOME EVENTS
@@ -64,81 +66,108 @@ Remove	"juju remove-application canercharm"	stop -> remove
     """
     _on_[WHATEVER CONTAINER YOU WRITE IN METADATA.YAML]_pebble_ready
     """
-    def _on_httpbin_pebble_ready(self, event):
-        """Define and start a workload using the Pebble API.
-        Learn more about Pebble layers at https://github.com/canonical/pebble
-        """
-        # Get a reference the container attribute on the PebbleReadyEvent
+
+    def _on_gosherve_pebble_ready(self, event):
+        # get a reference the container attribute on the PebbleReadyEvent
         container = event.workload
-        # Define an initial Pebble layer configuration
+
+        # define an initial pebble layer config
         pebble_layer = {
-            "summary": "httpbin layer",
-            "description": "pebble config layer for httpbin",
-            "services": {
-                "httpbin": {
-                    "override": "replace",
-                    "summary": "httpbin",
-                    "command": "gunicorn -b 0.0.0.0:80 httpbin:app -k gevent",
-                    "startup": "enabled",
-                    "environment": {"thing": self.model.config["thing"]},
+            "summary" : "gosherve layer",
+            "description" : "pebble config layer for gosherve",
+            "services" : {
+                "gosherve" : {
+                    "override" : "replace",
+                    "summary" : "gosherve",
+                    "command" : "/gosherve",
+                    "startup" : "enabled",
+                    "environment" : {
+                        "REDIRECT_MAP_URL" : "https://jnsgr.uk/demo-routes"
+                    },
                 }
-            },
+            }
         }
-        # Add intial Pebble config layer using the Pebble API
-        container.add_layer("httpbin", pebble_layer, combine=True)
-        # combine=True =======> If there's already a layer with the
-        # same name (e.g. "httpbin") running on this Pebble instance,
-        # then override it
 
-        # Autostart any services that were defined with startup: enabled
+        # add initial pebble config layer using the pebble API
+        container.add_layer("gosherve", pebble_layer, combine=True)
         container.autostart()
-        # Learn more about statuses in the SDK docs:
-        # https://juju.is/docs/sdk/constructs#heading--statuses
         self.unit.status = ActiveStatus()
-        """Report its own status to the Juju controller. There are 6 valid
-        types, only 4 of them are accessible from charm code.
 
-        from ops.model import <the 4 below>
+    # def _on_httpbin_pebble_ready(self, event):
+    #     """Define and start a workload using the Pebble API.
+    #     Learn more about Pebble layers at https://github.com/canonical/pebble
+    #     """
+    #     # Get a reference the container attribute on the PebbleReadyEvent
+    #     container = event.workload
+    #     # Define an initial Pebble layer configuration
+    #     pebble_layer = {
+    #         "summary": "httpbin layer",
+    #         "description": "pebble config layer for httpbin",
+    #         "services": {
+    #             "httpbin": {
+    #                 "override": "replace",
+    #                 "summary": "httpbin",
+    #                 "command": "gunicorn -b 0.0.0.0:80 httpbin:app -k gevent",
+    #                 "startup": "enabled",
+    #                 "environment": {"thing": self.model.config["thing"]},
+    #             }
+    #         },
+    #     }
+    #     # Add intial Pebble config layer using the Pebble API
+    #     container.add_layer("httpbin", pebble_layer, combine=True)
+    #     # combine=True =======> If there's already a layer with the
+    #     # same name (e.g. "httpbin") running on this Pebble instance,
+    #     # then override it
 
-        ActiveStatus("Everything is good")
-        WaitingStatus
-        MaintenanceStatus("Installing application packages, doing something, and gonna go back to ActiveStatus without any intervention") <------- setting a msg is possible
-        BlockedStatus("I need a human to recover me from something")
-        * UnknownStatus
-        * ErrorStatus
+    #     # Autostart any services that were defined with startup: enabled
+    #     container.autostart()
+    #     # Learn more about statuses in the SDK docs:
+    #     # https://juju.is/docs/sdk/constructs#heading--statuses
+    #     self.unit.status = ActiveStatus()
+    #     """Report its own status to the Juju controller. There are 6 valid
+    #     types, only 4 of them are accessible from charm code.
 
-        """
+    #     from ops.model import <the 4 below>
 
-    def _on_config_changed(self, _):
-        """Just an example to show how to deal with changed configuration.
+    #     ActiveStatus("Everything is good")  <------- setting a msg is possible
+    #     WaitingStatus
+    #     MaintenanceStatus("Installing application packages, doing something, and gonna go back to ActiveStatus without any intervention")
+    #     BlockedStatus("I need a human to recover me from something")
+    #     * UnknownStatus
+    #     * ErrorStatus
 
-        TEMPLATE-TODO: change this example to suit your needs.
-        If you don't need to handle config, you can remove this method,
-        the hook created in __init__.py for it, the corresponding test,
-        and the config.py file.
+    #     """
 
-        Learn more about config at https://juju.is/docs/sdk/config
-        """
-        current = self.config["thing"]
-        if current not in self._stored.things:
-            logger.debug("found a new thing: %r", current)
-            self._stored.things.append(current)
+    # def _on_config_changed(self, _):
+    #     """Just an example to show how to deal with changed configuration.
 
-    def _on_fortune_action(self, event):
-        """Just an example to show how to receive actions.
+    #     TEMPLATE-TODO: change this example to suit your needs.
+    #     If you don't need to handle config, you can remove this method,
+    #     the hook created in __init__.py for it, the corresponding test,
+    #     and the config.py file.
 
-        TEMPLATE-TODO: change this example to suit your needs.
-        If you don't need to handle actions, you can remove this method,
-        the hook created in __init__.py for it, the corresponding test,
-        and the actions.py file.
+    #     Learn more about config at https://juju.is/docs/sdk/config
+    #     """
+    #     current = self.config["thing"]
+    #     if current not in self._stored.things:
+    #         logger.debug("found a new thing: %r", current)
+    #         self._stored.things.append(current)
 
-        Learn more about actions at https://juju.is/docs/sdk/actions
-        """
-        fail = event.params["fail"]
-        if fail:
-            event.fail(fail)
-        else:
-            event.set_results({"fortune": "A bug in the code is worth two in the documentation."})
+    # def _on_fortune_action(self, event):
+    #     """Just an example to show how to receive actions.
+
+    #     TEMPLATE-TODO: change this example to suit your needs.
+    #     If you don't need to handle actions, you can remove this method,
+    #     the hook created in __init__.py for it, the corresponding test,
+    #     and the actions.py file.
+
+    #     Learn more about actions at https://juju.is/docs/sdk/actions
+    #     """
+    #     fail = event.params["fail"]
+    #     if fail:
+    #         event.fail(fail)
+    #     else:
+    #         event.set_results({"fortune": "A bug in the code is worth two in the documentation."})
 
 
 if __name__ == "__main__":

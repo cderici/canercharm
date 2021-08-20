@@ -7,12 +7,12 @@ summary: |
   Sort of a sparring charm that may or may not work at different times.
 
 containers:
-  httpbin:
-    resource: httpbin-image
+  gosherve:
+    resource: gosherve-image
 
 # each container defined above must specify an oci-image resource
 resources:
-  httpbin-image:
+  gosherve-image:
     type: oci-image
-    description: OCI image for httpbin (kennethreitz/httpbin)
+    description: OCI image for gosherve (kennethreitz/httpbin)
 
