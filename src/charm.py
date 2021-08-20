@@ -54,6 +54,7 @@ class CanercharmCharm(CharmBase):
 
         self.framework.observe(self.on.install, self._on_install) # <---- fires ONLY on $ juju deploy (and scale)
 
+        self.framework.observe(self.on.custom_job_action, self._perform_custom_task)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
 
     """
@@ -94,6 +95,13 @@ Remove	"juju remove-application canercharm"	stop -> remove
         logger.info(f">>>>>>>>>>>>>>>>>>>>>>>>>> Downloading site from {site_src}")
         urllib.request.urlretrieve(site_src, "/srv/index.html")
         self.unit.status = ActiveStatus("Her şey normal")
+
+    def _perform_custom_task(self, event):
+        event.log("get some log action going")
+        event.log("pull")
+        self._fetch_site()
+        event.log("DONE.DONE.DONE.DONE.DONE.DONE.DONE.DONE....")
+        event.set_results({"result": "site pulled", "key" : "val"})
 
     def _on_config_changed(self, event):
         # get the container so we can configure/manipulate it
